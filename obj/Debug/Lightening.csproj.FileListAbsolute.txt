@@ -1,0 +1,12 @@
+C:\Users\chenxinxin.TCDRILAN\source\repos\Lightening\bin\Debug\Lightening.dll
+C:\Users\chenxinxin.TCDRILAN\source\repos\Lightening\bin\Debug\Lightening.pdb
+C:\Users\chenxinxin.TCDRILAN\source\repos\Lightening\bin\Debug\RevitAPI.dll
+C:\Users\chenxinxin.TCDRILAN\source\repos\Lightening\bin\Debug\RevitAPIUI.dll
+C:\Users\chenxinxin.TCDRILAN\source\repos\Lightening\obj\Debug\Lightening.csprojAssemblyReference.cache
+C:\Users\chenxinxin.TCDRILAN\source\repos\Lightening\obj\Debug\Lightening.csproj.CoreCompileInputs.cache
+C:\Users\chenxinxin.TCDRILAN\source\repos\Lightening\obj\Debug\Lightening.csproj.CopyComplete
+C:\Users\chenxinxin.TCDRILAN\source\repos\Lightening\obj\Debug\Lightening.dll
+C:\Users\chenxinxin.TCDRILAN\source\repos\Lightening\obj\Debug\Lightening.pdb
+C:\Users\chenxinxin.TCDRILAN\source\repos\Lightening\obj\Debug\Lightening.Form1.resources
+C:\Users\chenxinxin.TCDRILAN\source\repos\Lightening\obj\Debug\Lightening.csproj.GenerateResource.cache
+C:\Users\chenxinxin.TCDRILAN\source\repos\Lightening\obj\Debug\Lightening.Properties.Resources.resources
