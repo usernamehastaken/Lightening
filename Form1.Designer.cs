@@ -35,27 +35,30 @@ namespace Lightening
             // 
             // richTextBox1
             // 
-            this.richTextBox1.Location = new System.Drawing.Point(12, 12);
+            this.richTextBox1.Location = new System.Drawing.Point(18, 18);
+            this.richTextBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(370, 494);
+            this.richTextBox1.Size = new System.Drawing.Size(553, 739);
             this.richTextBox1.TabIndex = 0;
             this.richTextBox1.Text = "不可删除";
             // 
             // richTextBox2
             // 
-            this.richTextBox2.Location = new System.Drawing.Point(388, 12);
+            this.richTextBox2.Location = new System.Drawing.Point(582, 18);
+            this.richTextBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.richTextBox2.Name = "richTextBox2";
-            this.richTextBox2.Size = new System.Drawing.Size(427, 494);
+            this.richTextBox2.Size = new System.Drawing.Size(638, 739);
             this.richTextBox2.TabIndex = 1;
             this.richTextBox2.Text = "可删除";
             // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(827, 518);
+            this.ClientSize = new System.Drawing.Size(1240, 90);
             this.Controls.Add(this.richTextBox2);
             this.Controls.Add(this.richTextBox1);
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "Form1";
             this.Text = "Form1";
             this.ResumeLayout(false);
