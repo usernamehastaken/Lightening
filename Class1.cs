@@ -13,6 +13,9 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.IO;
 using System.Drawing.Imaging;
+using Autodesk.Revit.DB.Mechanical;
+using System.Threading;
+using UIFrameworkServices;
 
 namespace Lightening
 {
@@ -21,6 +24,7 @@ namespace Lightening
     {
         [DllImport("user32.dll")]
         public static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);
+
         [DllImport("user32.dll")]
         static extern int ShowCursor(bool bShow);
         const uint MOUSEEVENTF_ABSOLUTE = 0x8000;
@@ -38,10 +42,30 @@ namespace Lightening
 
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+
+            //Class2.test(commandData.Application.ActiveUIDocument);
+            //return Result.Succeeded;
+
+            ShowCursor(true);
             List<System.Drawing.Point> points = new List<System.Drawing.Point>();
             UIDocument uIDocument = commandData.Application.ActiveUIDocument;
             Document document = uIDocument.Document;
+
+            #region 获取需要遍历的图元
+            FilteredElementCollector flt_elementids = new FilteredElementCollector(document);
+            flt_elementids.OfClass(typeof(FamilyInstance));
+            //List<Reference> list_refs = (List<Reference>)uIDocument.Selection.PickObjects(Autodesk.Revit.UI.Selection.ObjectType.Element);
+            List<ElementId> elementIds = new List<ElementId>();
+            //foreach (Reference item in list_refs)
+            //{
+            //    elementIds.Add(item.ElementId);
+            //}
+
+            elementIds = (List<ElementId>)flt_elementids.ToElementIds();
+            #endregion
+
             #region 截图区域
+            MessageBox.Show("截取第一个点");
             while (points.Count < 1)
             {
                 if (System.Windows.Forms.Control.MouseButtons == MouseButtons.Left)
@@ -50,7 +74,7 @@ namespace Lightening
                 }
                 Application.DoEvents();
             }
-            MessageBox.Show(points[0].X + ":" + points[0].Y);
+            MessageBox.Show("截取第二个点");
             while (points.Count < 2)
             {
                 if (System.Windows.Forms.Control.MouseButtons == MouseButtons.Left)
@@ -60,79 +84,61 @@ namespace Lightening
                 }
                 Application.DoEvents();
             }
-            MessageBox.Show(points[1].X + ":" + points[1].Y);
+            //ShowCursor(false);
             #endregion
-
-            HashAlgorithm hash = HashAlgorithm.Create();
 
             #region 原始截图
             IntPtr revit_handle= Process.GetCurrentProcess().MainWindowHandle;
             Screen revit_Screen = Screen.FromHandle(revit_handle);
-            Bitmap btm = new Bitmap(points[1].X-points[0].X, points[1].Y-points[0].Y);
+            Bitmap btm = new Bitmap(points[1].X-points[0].X-2, points[1].Y-points[0].Y-2);//减少两个像素，防止鼠标乱入
             Graphics ori_g = Graphics.FromImage(btm);
-            ori_g.CopyFromScreen(points[0].X, points[0].Y, 0, 0, revit_Screen.Bounds.Size);
-            Form1 form1 = new Form1();
-            form1.Width = btm.Width;
-            form1.Height = btm.Height;
-            form1.BackgroundImage = btm;
-            form1.Show();
+            ori_g.CopyFromScreen(points[0].X, points[0].Y, 0, 0, btm.Size);
             MemoryStream memoryStream = new MemoryStream();
             btm.Save(memoryStream,ImageFormat.Jpeg);
-            byte[] hash_b1 = hash.ComputeHash(memoryStream.GetBuffer());
-            string ori_str = BitConverter.ToString(hash_b1);
+            string ori_str = Convert.ToBase64String(memoryStream.GetBuffer());
             #endregion
-            ori_g.CopyFromScreen(points[0].X, points[0].Y, 0, 0, revit_Screen.Bounds.Size);
-            Form1 form2 = new Form1();
-            form2.Width = btm.Width;
-            form2.Height = btm.Height;
-            form2.BackgroundImage = btm;
-            form2.Text = "2";
-            form2.Show();
-            btm.Save(memoryStream, ImageFormat.Jpeg);
-            byte[] hash_b2 = hash.ComputeHash(memoryStream.GetBuffer());
-            string ori_str2 = BitConverter.ToString(hash_b2);
-            MessageBox.Show(ori_str + ":" + ori_str2);
-            //List<ElementId> elementIds = new List<ElementId>();
-            //foreach (Reference item in uIDocument.Selection.PickObjects(Autodesk.Revit.UI.Selection.ObjectType.Element))
-            //{
-            //    elementIds.Add(item.ElementId);
-            //}
-            //List<ElementId> empty_elementIds = new List<ElementId>();
-            //uIDocument.Selection.SetElementIds(empty_elementIds);
+
+            Form1 f1 = new Form1();
 
 
-            //Form1 form1 = new Form1();
-            //form1.Text = elementIds.Count.ToString();
-            //form1.Show();
-
-            //foreach (ElementId item in elementIds)
-            //{
-            //    form1.Text = (int.Parse(form1.Text) - 1).ToString();
-            //    using (Transaction trans = new Transaction(document, "hide"))
-            //    {
-            //        empty_elementIds.Clear();
-            //        empty_elementIds.Add(new ElementId(248595));
-            //        //uIDocument.Selection.SetElementIds(empty_elementIds);
-            //        trans.Start();
-            //        uIDocument.ActiveView.HideElements(empty_elementIds);
-            //        Application.DoEvents();
-            //        ori_g.CopyFromScreen(points[0].X, points[0].Y, 0, 0, revit_Screen.Bounds.Size);
-            //        btm.Save(memoryStream, ImageFormat.Jpeg);
-            //        byte[] hash_b2 = hash.ComputeHash(memoryStream.GetBuffer());
-            //        string ori_str2 = BitConverter.ToString(hash_b2);
-            //        if (ori_str==ori_str2)
-            //        {
-            //            trans.Commit();
-            //            MessageBox.Show("1");
-            //        }
-            //        else
-            //        {
-            //            trans.RollBack();
-            //        }
-            //    }
-            //    return Result.Succeeded;
-            //}
-
+            f1.Text = elementIds.Count().ToString();
+            f1.Show();
+            List<ElementId> hide_elementids = new List<ElementId>();
+            List<ElementId> hide_tmp_elementids = new List<ElementId>();
+            string str;
+            #region
+            DateTime dt = DateTime.Now;
+            foreach (ElementId item in elementIds)
+            {
+                f1.Text = (int.Parse(f1.Text) - 1).ToString();
+                using (Transaction trans=new Transaction (document,"hide"))
+                {
+                    hide_tmp_elementids = new List<ElementId>();
+                    hide_tmp_elementids.Add(item);
+                    trans.Start();
+                    uIDocument.ActiveView.HideElements(hide_tmp_elementids);
+                    trans.Commit();
+                    Application.DoEvents();
+                    memoryStream = new MemoryStream();
+                    ori_g.CopyFromScreen(points[0].X, points[0].Y, 0, 0, btm.Size);
+                    btm.Save(memoryStream, ImageFormat.Jpeg);
+                    str = Convert.ToBase64String(memoryStream.GetBuffer());
+                    if (ori_str != str)
+                    {
+                        f1.richTextBox1.Text = f1.richTextBox1.Text + "\n" + item.ToString();
+                        UIFrameworkServices.QuickAccessToolBarService.performMultipleUndoRedoOperations(true, 1);
+                        Application.DoEvents();
+                        //Thread.Sleep(500);
+                    }
+                    else
+                    {
+                        f1.richTextBox2.Text = f1.richTextBox2.Text + "\n" + item.ToString();
+                    }
+                }
+            }
+            #endregion
+            ShowCursor(true);
+            MessageBox.Show((DateTime.Now-dt).TotalSeconds.ToString()+":"+dt.ToString()+">>"+DateTime.Now.ToString());
 
             return Result.Succeeded;
         }
