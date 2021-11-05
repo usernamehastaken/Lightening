@@ -52,16 +52,18 @@ namespace Lightening
             Document document = uIDocument.Document;
 
             #region 获取需要遍历的图元
-            FilteredElementCollector flt_elementids = new FilteredElementCollector(document);
-            flt_elementids.OfClass(typeof(FamilyInstance));
-            //List<Reference> list_refs = (List<Reference>)uIDocument.Selection.PickObjects(Autodesk.Revit.UI.Selection.ObjectType.Element);
             List<ElementId> elementIds = new List<ElementId>();
-            //foreach (Reference item in list_refs)
-            //{
-            //    elementIds.Add(item.ElementId);
-            //}
+            List<Reference> reffs = (List<Reference>)uIDocument.Selection.PickObjects(Autodesk.Revit.UI.Selection.ObjectType.Element);
+            List<Type> types = new List<Type>();
+            foreach (Reference item in reffs)
+            {
+                Element elt = document.GetElement(item);
+                if (!types.Contains(elt.GetType()))
+                {
+                    types.Add(elt.GetType());
+                }
+            }
 
-            elementIds = (List<ElementId>)flt_elementids.ToElementIds();
             #endregion
 
             #region 截图区域
@@ -110,33 +112,43 @@ namespace Lightening
 
             #region 循环
             DateTime dt = DateTime.Now;
-            foreach (ElementId item in elementIds)
+            foreach (Type item in types)
             {
-                f1.Text = (int.Parse(f1.Text) - 1).ToString();
-                using (Transaction trans=new Transaction (document,"hide"))
-                {
-                    hide_tmp_elementids = new List<ElementId>();
-                    hide_tmp_elementids.Add(item);
-                    trans.Start();
-                    uIDocument.ActiveView.HideElements(hide_tmp_elementids);
-                    trans.Commit();
-                    Application.DoEvents();
-                    memoryStream = new MemoryStream();
-                    ori_g.CopyFromScreen(points[0].X, points[0].Y, 0, 0, btm.Size);
-                    btm.Save(memoryStream, ImageFormat.Jpeg);
-                    str = Convert.ToBase64String(memoryStream.GetBuffer());
-                    if (ori_str != str)
-                    {
-                        f1.richTextBox1.Text =item.ToString() + "\n" + f1.richTextBox1.Text;
-                        UIFrameworkServices.QuickAccessToolBarService.performMultipleUndoRedoOperations(true, 1);
-                        Application.DoEvents();
-                        //Thread.Sleep(500);
-                    }
-                    else
-                    {
-                        f1.richTextBox2.Text = item.ToString() + "\n" + f1.richTextBox2.Text;
-                    }
-                }
+                FilteredElementCollector flt = new FilteredElementCollector(document);
+                flt.OfClass(item);
+                elementIds = (List<ElementId>)flt.ToElementIds();
+
+                double n=8;double count=20;
+
+                List
+                //foreach (ElementId id in elementIds)
+                //{
+                //    f1.Text = (int.Parse(f1.Text) - 1).ToString();
+                //    using (Transaction trans = new Transaction(document, "hide"))
+                //    {
+                //        hide_tmp_elementids = new List<ElementId>();
+                //        hide_tmp_elementids.Add(id);
+                //        trans.Start();
+                //        uIDocument.ActiveView.HideElements(hide_tmp_elementids);
+                //        trans.Commit();
+                //        Application.DoEvents();
+                //        memoryStream = new MemoryStream();
+                //        ori_g.CopyFromScreen(points[0].X, points[0].Y, 0, 0, btm.Size);
+                //        btm.Save(memoryStream, ImageFormat.Jpeg);
+                //        str = Convert.ToBase64String(memoryStream.GetBuffer());
+                //        if (ori_str != str)
+                //        {
+                //            f1.richTextBox1.Text = item.ToString() + "\n" + f1.richTextBox1.Text;
+                //            UIFrameworkServices.QuickAccessToolBarService.performMultipleUndoRedoOperations(true, 1);
+                //            Application.DoEvents();
+                //            //Thread.Sleep(500);
+                //        }
+                //        else
+                //        {
+                //            f1.richTextBox2.Text = item.ToString() + "\n" + f1.richTextBox2.Text;
+                //        }
+                //    }
+                //}
             }
             #endregion
             
@@ -145,4 +157,6 @@ namespace Lightening
             return Result.Succeeded;
         }
     }
+
+    
 }
