@@ -16,6 +16,7 @@ using System.Drawing.Imaging;
 using Autodesk.Revit.DB.Mechanical;
 using System.Threading;
 using UIFrameworkServices;
+using System.Collections;
 
 namespace Lightening
 {
@@ -54,16 +55,25 @@ namespace Lightening
             #region 获取需要遍历的图元
             List<ElementId> elementIds = new List<ElementId>();
             List<Reference> reffs = (List<Reference>)uIDocument.Selection.PickObjects(Autodesk.Revit.UI.Selection.ObjectType.Element);
-            List<Type> types = new List<Type>();
+            List<string> categorys = new List<string>();
+            Dictionary<string, Celle> dic_ells = new Dictionary<string, Celle>();
             foreach (Reference item in reffs)
             {
                 Element elt = document.GetElement(item);
-                if (!types.Contains(elt.GetType()))
+                if (!categorys.Contains(elt.Category.Name))
                 {
-                    types.Add(elt.GetType());
+                    categorys.Add(elt.Category.Name);
+                    dic_ells.Add(elt.Category.Name, new Celle());
+                }
+                dic_ells[elt.Category.Name].elementIds.Add(item.ElementId);
+            }
+            foreach (UIView item in uIDocument.GetOpenUIViews())
+            {
+                if (item.ViewId==uIDocument.ActiveView.Id)
+                {
+                    item.ZoomToFit();
                 }
             }
-
             #endregion
 
             #region 截图区域
@@ -103,60 +113,123 @@ namespace Lightening
             
             Form1 f1 = new Form1();
             f1.Top = points[0].Y - f1.Height - 10;
-
-            f1.Text = elementIds.Count().ToString();
             f1.Show();
-            List<ElementId> hide_elementids = new List<ElementId>();
-            List<ElementId> hide_tmp_elementids = new List<ElementId>();
-            string str;
 
             #region 循环
             DateTime dt = DateTime.Now;
-            foreach (Type item in types)
+            List<ElementId> remain_ells = new List<ElementId>();
+            foreach (string item in dic_ells.Keys)
             {
-                FilteredElementCollector flt = new FilteredElementCollector(document);
-                flt.OfClass(item);
-                elementIds = (List<ElementId>)flt.ToElementIds();
-
-                double n=8;double count=20;
-
-                List
-                //foreach (ElementId id in elementIds)
-                //{
-                //    f1.Text = (int.Parse(f1.Text) - 1).ToString();
-                //    using (Transaction trans = new Transaction(document, "hide"))
-                //    {
-                //        hide_tmp_elementids = new List<ElementId>();
-                //        hide_tmp_elementids.Add(id);
-                //        trans.Start();
-                //        uIDocument.ActiveView.HideElements(hide_tmp_elementids);
-                //        trans.Commit();
-                //        Application.DoEvents();
-                //        memoryStream = new MemoryStream();
-                //        ori_g.CopyFromScreen(points[0].X, points[0].Y, 0, 0, btm.Size);
-                //        btm.Save(memoryStream, ImageFormat.Jpeg);
-                //        str = Convert.ToBase64String(memoryStream.GetBuffer());
-                //        if (ori_str != str)
-                //        {
-                //            f1.richTextBox1.Text = item.ToString() + "\n" + f1.richTextBox1.Text;
-                //            UIFrameworkServices.QuickAccessToolBarService.performMultipleUndoRedoOperations(true, 1);
-                //            Application.DoEvents();
-                //            //Thread.Sleep(500);
-                //        }
-                //        else
-                //        {
-                //            f1.richTextBox2.Text = item.ToString() + "\n" + f1.richTextBox2.Text;
-                //        }
-                //    }
-                //}
+                ArrayList arrayList = new ArrayList();
+                arrayList.Add(dic_ells[item]);
+                int flag = 0; int count = arrayList.Count;
+                f1.Text = item;
+                f1.richTextBox1.Text = f1.richTextBox1.Text + "\n" + f1.Text;
+                int nn = 0;
+                do
+                {
+                    f1.Text = item + ">" + nn.ToString();
+                    count = arrayList.Count;flag = 0;
+                    for (int i = count - 1; i >= 0; i--)
+                    {
+                        if (get_show_ells(((Celle)arrayList[i]).elementIds, uIDocument, ori_str, ori_g, points[0].X, points[0].Y, btm).Count == 0)
+                        {
+                            arrayList.RemoveAt(i);
+                            foreach (ElementId id in ((Celle)arrayList[i]).elementIds)
+                            {
+                                f1.richTextBox2.Text = id + "\n" + f1.richTextBox2.Text;
+                            }
+                        }
+                    }
+                    count = arrayList.Count;//优化后的表
+                    if (count > 0)
+                    {
+                        ArrayList new_arrayList = new ArrayList();
+                        foreach (Celle celle in arrayList)
+                        {
+                            new_arrayList.AddRange(celle.slice_ells_to_Celle());
+                        }
+                        arrayList = new_arrayList;
+                        foreach (Celle celle in arrayList)
+                        {
+                            flag = celle.elementIds.Count + flag;
+                        }
+                    }
+                } while (flag!=count);
+                if (arrayList.Count>1)
+                {
+                    foreach (Celle celle in arrayList)
+                    {
+                        remain_ells.AddRange(celle.elementIds);
+                        f1.richTextBox1.Text = celle.elementIds[0].IntegerValue.ToString() + "\n" + f1.richTextBox1.Text;
+                    }
+                }
             }
-            #endregion
             
-            MessageBox.Show((DateTime.Now-dt).TotalSeconds.ToString()+":"+dt.ToString()+">>"+DateTime.Now.ToString());
+            #endregion
+
+            MessageBox.Show((DateTime.Now - dt).TotalSeconds.ToString() + ":" + dt.ToString() + ">>" + DateTime.Now.ToString());
 
             return Result.Succeeded;
         }
-    }
 
+        public List<ElementId> get_show_ells(List<ElementId> elementIds,UIDocument uIDocument,string ori_str, Graphics ori_g,int x,int y, Bitmap btm)
+        {
+            using (Transaction trans = new Transaction(uIDocument.Document, "hide"))
+            {
+                trans.Start();
+                uIDocument.ActiveView.HideElements(elementIds);
+                trans.Commit();
+                Application.DoEvents();
+                MemoryStream memoryStream = new MemoryStream();
+                ori_g.CopyFromScreen(x, y, 0, 0, btm.Size);
+                btm.Save(memoryStream, ImageFormat.Jpeg);
+                string str = Convert.ToBase64String(memoryStream.GetBuffer());
+                if (ori_str != str)
+                {
+                    UIFrameworkServices.QuickAccessToolBarService.performMultipleUndoRedoOperations(true, 1);
+                    Application.DoEvents();
+                    return elementIds;
+                }
+                else
+                {
+                    return new List<ElementId>();
+                }
+            }
+        }
+    }
     
+    public class Celle
+    {
+        public List<ElementId> elementIds;
+        public List<Celle> celles = new List<Celle>();
+        public Celle()
+        {
+            elementIds = new List<ElementId>();
+        }
+        public Celle(List<ElementId> ells)
+        {
+            elementIds = ells;
+        }
+
+        public List<Celle> slice_ells_to_Celle()
+        {
+            int count = (int)Math.Floor(Math.Sqrt(elementIds.Count));
+            int i=0;
+            while (i * count < elementIds.Count())
+            {
+                if ((i+1)*count>elementIds.Count())
+                {
+                    celles.Add(new Celle(elementIds.GetRange(i * count, elementIds.Count - i * count)));
+                }
+                else
+                {
+                    celles.Add(new Celle(elementIds.GetRange(i * count, count)));
+                }
+                i++;
+            }
+            return celles;
+        }
+        
+    }
 }
