@@ -13,10 +13,12 @@ namespace Lightening
     {
         public static void test(UIDocument uIDocument)
         {
-            FilteredElementCollector flt_elementids = new FilteredElementCollector(uIDocument.Document);
-            flt_elementids.WherePasses(new ElementIsElementTypeFilter(true));
-            TaskDialog.Show("1", flt_elementids.Count().ToString());
-            //uIDocument.Selection.SetElementIds(flt_elementids.ToElementIds());
+            while (true)
+            {
+                Reference reff = uIDocument.Selection.PickObject(Autodesk.Revit.UI.Selection.ObjectType.Element);
+                Element el = uIDocument.Document.GetElement(reff);
+                TaskDialog.Show("1", el.GetType().ToString());
+            }
         }
 
     }

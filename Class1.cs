@@ -52,16 +52,18 @@ namespace Lightening
             Document document = uIDocument.Document;
 
             #region 获取需要遍历的图元
-            FilteredElementCollector flt_elementids = new FilteredElementCollector(document);
-            flt_elementids.OfClass(typeof(FamilyInstance));
-            //List<Reference> list_refs = (List<Reference>)uIDocument.Selection.PickObjects(Autodesk.Revit.UI.Selection.ObjectType.Element);
             List<ElementId> elementIds = new List<ElementId>();
-            //foreach (Reference item in list_refs)
-            //{
-            //    elementIds.Add(item.ElementId);
-            //}
+            List<Reference> reffs = (List<Reference>)uIDocument.Selection.PickObjects(Autodesk.Revit.UI.Selection.ObjectType.Element);
+            List<Type> types = new List<Type>();
+            foreach (Reference item in reffs)
+            {
+                Element elt = document.GetElement(item);
+                if (!types.Contains(elt.GetType()))
+                {
+                    types.Add(elt.GetType());
+                }
+            }
 
-            elementIds = (List<ElementId>)flt_elementids.ToElementIds();
             #endregion
 
             #region 截图区域
@@ -84,11 +86,12 @@ namespace Lightening
                 }
                 Application.DoEvents();
             }
-            //ShowCursor(false);
+            Cursor.Position = new System.Drawing.Point(Screen.PrimaryScreen.Bounds.X, Screen.PrimaryScreen.Bounds.Y);
+
             #endregion
 
             #region 原始截图
-            IntPtr revit_handle= Process.GetCurrentProcess().MainWindowHandle;
+            IntPtr revit_handle = Process.GetCurrentProcess().MainWindowHandle;
             Screen revit_Screen = Screen.FromHandle(revit_handle);
             Bitmap btm = new Bitmap(points[1].X-points[0].X-2, points[1].Y-points[0].Y-2);//减少两个像素，防止鼠标乱入
             Graphics ori_g = Graphics.FromImage(btm);
@@ -97,50 +100,63 @@ namespace Lightening
             btm.Save(memoryStream,ImageFormat.Jpeg);
             string ori_str = Convert.ToBase64String(memoryStream.GetBuffer());
             #endregion
-
+            
             Form1 f1 = new Form1();
-
+            f1.Top = points[0].Y - f1.Height - 10;
 
             f1.Text = elementIds.Count().ToString();
             f1.Show();
             List<ElementId> hide_elementids = new List<ElementId>();
             List<ElementId> hide_tmp_elementids = new List<ElementId>();
             string str;
-            #region
+
+            #region 循环
             DateTime dt = DateTime.Now;
-            foreach (ElementId item in elementIds)
+            foreach (Type item in types)
             {
-                f1.Text = (int.Parse(f1.Text) - 1).ToString();
-                using (Transaction trans=new Transaction (document,"hide"))
-                {
-                    hide_tmp_elementids = new List<ElementId>();
-                    hide_tmp_elementids.Add(item);
-                    trans.Start();
-                    uIDocument.ActiveView.HideElements(hide_tmp_elementids);
-                    trans.Commit();
-                    Application.DoEvents();
-                    memoryStream = new MemoryStream();
-                    ori_g.CopyFromScreen(points[0].X, points[0].Y, 0, 0, btm.Size);
-                    btm.Save(memoryStream, ImageFormat.Jpeg);
-                    str = Convert.ToBase64String(memoryStream.GetBuffer());
-                    if (ori_str != str)
-                    {
-                        f1.richTextBox1.Text = f1.richTextBox1.Text + "\n" + item.ToString();
-                        UIFrameworkServices.QuickAccessToolBarService.performMultipleUndoRedoOperations(true, 1);
-                        Application.DoEvents();
-                        //Thread.Sleep(500);
-                    }
-                    else
-                    {
-                        f1.richTextBox2.Text = f1.richTextBox2.Text + "\n" + item.ToString();
-                    }
-                }
+                FilteredElementCollector flt = new FilteredElementCollector(document);
+                flt.OfClass(item);
+                elementIds = (List<ElementId>)flt.ToElementIds();
+
+                double n=8;double count=20;
+
+                List
+                //foreach (ElementId id in elementIds)
+                //{
+                //    f1.Text = (int.Parse(f1.Text) - 1).ToString();
+                //    using (Transaction trans = new Transaction(document, "hide"))
+                //    {
+                //        hide_tmp_elementids = new List<ElementId>();
+                //        hide_tmp_elementids.Add(id);
+                //        trans.Start();
+                //        uIDocument.ActiveView.HideElements(hide_tmp_elementids);
+                //        trans.Commit();
+                //        Application.DoEvents();
+                //        memoryStream = new MemoryStream();
+                //        ori_g.CopyFromScreen(points[0].X, points[0].Y, 0, 0, btm.Size);
+                //        btm.Save(memoryStream, ImageFormat.Jpeg);
+                //        str = Convert.ToBase64String(memoryStream.GetBuffer());
+                //        if (ori_str != str)
+                //        {
+                //            f1.richTextBox1.Text = item.ToString() + "\n" + f1.richTextBox1.Text;
+                //            UIFrameworkServices.QuickAccessToolBarService.performMultipleUndoRedoOperations(true, 1);
+                //            Application.DoEvents();
+                //            //Thread.Sleep(500);
+                //        }
+                //        else
+                //        {
+                //            f1.richTextBox2.Text = item.ToString() + "\n" + f1.richTextBox2.Text;
+                //        }
+                //    }
+                //}
             }
             #endregion
-            ShowCursor(true);
+            
             MessageBox.Show((DateTime.Now-dt).TotalSeconds.ToString()+":"+dt.ToString()+">>"+DateTime.Now.ToString());
 
             return Result.Succeeded;
         }
     }
+
+    
 }
