@@ -16,6 +16,7 @@ using System.Drawing.Imaging;
 using Autodesk.Revit.DB.Mechanical;
 using System.Threading;
 using UIFrameworkServices;
+using System.Collections;
 
 namespace Lightening
 {
@@ -54,16 +55,25 @@ namespace Lightening
             #region 获取需要遍历的图元
             List<ElementId> elementIds = new List<ElementId>();
             List<Reference> reffs = (List<Reference>)uIDocument.Selection.PickObjects(Autodesk.Revit.UI.Selection.ObjectType.Element);
-            List<Type> types = new List<Type>();
+            List<string> categorys = new List<string>();
+            Dictionary<string, List<ElementId>> dic_ells = new Dictionary<string, List<ElementId>>();
             foreach (Reference item in reffs)
             {
                 Element elt = document.GetElement(item);
-                if (!types.Contains(elt.GetType()))
+                if (!categorys.Contains(elt.Category.Name))
                 {
-                    types.Add(elt.GetType());
+                    categorys.Add(elt.Category.Name);
+                    dic_ells.Add(elt.Category.Name, new List<ElementId> ());
+                }
+                dic_ells[elt.Category.Name].Add(elt.Id);
+            }
+            foreach (UIView item in uIDocument.GetOpenUIViews())
+            {
+                if (item.ViewId==uIDocument.ActiveView.Id)
+                {
+                    item.ZoomToFit();
                 }
             }
-
             #endregion
 
             #region 截图区域
@@ -103,60 +113,91 @@ namespace Lightening
             
             Form1 f1 = new Form1();
             f1.Top = points[0].Y - f1.Height - 10;
-
-            f1.Text = elementIds.Count().ToString();
             f1.Show();
-            List<ElementId> hide_elementids = new List<ElementId>();
-            List<ElementId> hide_tmp_elementids = new List<ElementId>();
-            string str;
 
             #region 循环
             DateTime dt = DateTime.Now;
-            foreach (Type item in types)
+            foreach (string item in dic_ells.Keys)
             {
-                FilteredElementCollector flt = new FilteredElementCollector(document);
-                flt.OfClass(item);
-                elementIds = (List<ElementId>)flt.ToElementIds();
 
-                double n=8;double count=20;
-
-                List
-                //foreach (ElementId id in elementIds)
-                //{
-                //    f1.Text = (int.Parse(f1.Text) - 1).ToString();
-                //    using (Transaction trans = new Transaction(document, "hide"))
-                //    {
-                //        hide_tmp_elementids = new List<ElementId>();
-                //        hide_tmp_elementids.Add(id);
-                //        trans.Start();
-                //        uIDocument.ActiveView.HideElements(hide_tmp_elementids);
-                //        trans.Commit();
-                //        Application.DoEvents();
-                //        memoryStream = new MemoryStream();
-                //        ori_g.CopyFromScreen(points[0].X, points[0].Y, 0, 0, btm.Size);
-                //        btm.Save(memoryStream, ImageFormat.Jpeg);
-                //        str = Convert.ToBase64String(memoryStream.GetBuffer());
-                //        if (ori_str != str)
-                //        {
-                //            f1.richTextBox1.Text = item.ToString() + "\n" + f1.richTextBox1.Text;
-                //            UIFrameworkServices.QuickAccessToolBarService.performMultipleUndoRedoOperations(true, 1);
-                //            Application.DoEvents();
-                //            //Thread.Sleep(500);
-                //        }
-                //        else
-                //        {
-                //            f1.richTextBox2.Text = item.ToString() + "\n" + f1.richTextBox2.Text;
-                //        }
-                //    }
-                //}
             }
+
             #endregion
-            
-            MessageBox.Show((DateTime.Now-dt).TotalSeconds.ToString()+":"+dt.ToString()+">>"+DateTime.Now.ToString());
+
+            MessageBox.Show((DateTime.Now - dt).TotalSeconds.ToString() + ":" + dt.ToString() + ">>" + DateTime.Now.ToString());
 
             return Result.Succeeded;
         }
-    }
 
+        public List<ElementId> get_show_ells(List<ElementId> elementIds,UIDocument uIDocument,string ori_str, Graphics ori_g,int x,int y, Bitmap btm)
+        {
+            using (Transaction trans = new Transaction(uIDocument.Document, "hide"))
+            {
+                if (elementIds.Count <= 4)
+                {
+                    List<ElementId> remain_ells = new List<ElementId>();
+                    foreach (ElementId item in elementIds)
+                    {
+                        List<ElementId> tmp_remain_ells = new List<ElementId>();
+                        tmp_remain_ells.Add(item);
+                        trans.Start();
+                        uIDocument.ActiveView.HideElements(tmp_remain_ells);
+                        trans.Commit();
+                        Application.DoEvents();
+                        MemoryStream memoryStream = new MemoryStream();
+                        ori_g.CopyFromScreen(x, y, 0, 0, btm.Size);
+                        btm.Save(memoryStream, ImageFormat.Jpeg);
+                        string str = Convert.ToBase64String(memoryStream.GetBuffer());
+                        if (ori_str != str)
+                        {
+                            UIFrameworkServices.QuickAccessToolBarService.performMultipleUndoRedoOperations(true, 1);
+                            Application.DoEvents();
+                            remain_ells.Add(item);
+                        }
+                    }
+                    return remain_ells;
+                }
+                else
+                {
+                    trans.Start();
+                    uIDocument.ActiveView.HideElements(elementIds);
+                    trans.Commit();
+                    Application.DoEvents();
+                    MemoryStream memoryStream = new MemoryStream();
+                    ori_g.CopyFromScreen(x, y, 0, 0, btm.Size);
+                    btm.Save(memoryStream, ImageFormat.Jpeg);
+                    string str = Convert.ToBase64String(memoryStream.GetBuffer());
+                    if (ori_str != str)
+                    {
+                        UIFrameworkServices.QuickAccessToolBarService.performMultipleUndoRedoOperations(true, 1);
+                        Application.DoEvents();
+                        return elementIds;
+                    }
+                    else
+                    {
+                        return new List<ElementId>();
+                    }
+                }
+            }
+        }
+    }
     
+    public class Celle
+    {
+        public List<ElementId> elementIds;
+        public Celle(List<ElementId> ells)
+        {
+            elementIds = ells;
+        }
+
+        public void slice_ells_to_Celle()
+        {
+            double count = Math.Sqrt(elementIds.Count);
+            for (int i = 0; i < count; i++)
+            {
+                Celle celle = new Celle(elementIds.GetRange((int)(i * count), (int)count));
+            }
+        }
+        
+    }
 }
