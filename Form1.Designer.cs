@@ -31,34 +31,53 @@ namespace Lightening
         {
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.richTextBox2 = new System.Windows.Forms.RichTextBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.richTextBox3 = new System.Windows.Forms.RichTextBox();
             this.SuspendLayout();
             // 
             // richTextBox1
             // 
-            this.richTextBox1.Location = new System.Drawing.Point(18, 18);
-            this.richTextBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.richTextBox1.Location = new System.Drawing.Point(12, 12);
             this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(553, 739);
+            this.richTextBox1.Size = new System.Drawing.Size(113, 36);
             this.richTextBox1.TabIndex = 0;
             this.richTextBox1.Text = "不可删除";
             // 
             // richTextBox2
             // 
-            this.richTextBox2.Location = new System.Drawing.Point(582, 18);
-            this.richTextBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.richTextBox2.Location = new System.Drawing.Point(131, 12);
             this.richTextBox2.Name = "richTextBox2";
-            this.richTextBox2.Size = new System.Drawing.Size(638, 739);
+            this.richTextBox2.Size = new System.Drawing.Size(107, 36);
             this.richTextBox2.TabIndex = 1;
             this.richTextBox2.Text = "可删除";
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(357, 25);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 2;
+            this.button1.Text = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // richTextBox3
+            // 
+            this.richTextBox3.Location = new System.Drawing.Point(244, 12);
+            this.richTextBox3.Name = "richTextBox3";
+            this.richTextBox3.Size = new System.Drawing.Size(107, 36);
+            this.richTextBox3.TabIndex = 3;
+            this.richTextBox3.Text = "可删除";
+            // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1240, 90);
+            this.ClientSize = new System.Drawing.Size(441, 54);
+            this.Controls.Add(this.richTextBox3);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.richTextBox2);
             this.Controls.Add(this.richTextBox1);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "Form1";
             this.Text = "Form1";
             this.ResumeLayout(false);
@@ -69,5 +88,7 @@ namespace Lightening
 
         public System.Windows.Forms.RichTextBox richTextBox1;
         public System.Windows.Forms.RichTextBox richTextBox2;
+        private System.Windows.Forms.Button button1;
+        public System.Windows.Forms.RichTextBox richTextBox3;
     }
 }

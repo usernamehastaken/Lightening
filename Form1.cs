@@ -12,9 +12,15 @@ namespace Lightening
 {
     public partial class Form1 : Form
     {
+        public int flag = 0;
         public Form1()
         {
             InitializeComponent();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            flag++;
         }
     }
 }

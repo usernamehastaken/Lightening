@@ -98,7 +98,7 @@ namespace Lightening
                 Application.DoEvents();
             }
             Cursor.Position = new System.Drawing.Point(Screen.PrimaryScreen.Bounds.X, Screen.PrimaryScreen.Bounds.Y);
-            ShowCursor(false);
+            //ShowCursor(false);
             #endregion
 
             #region 原始截图
@@ -127,7 +127,7 @@ namespace Lightening
                 f1.Text = item;
                 f1.richTextBox1.Text = f1.richTextBox1.Text + "\n" + f1.Text;
                 f1.Text = f1.Text + ">" + dic_ells[item].elementIds.Count.ToString();
-                int n = 0;int nn = 0;
+                int n = 0;int nn = 0; List<ElementId> tmp_elementIds = new List<ElementId>();
                 do
                 {
                     n++;
@@ -136,8 +136,26 @@ namespace Lightening
                     for (int i = count - 1; i >= 0; i--)
                     {
                         nn++;
-                        f1.Text = item + ">" + n.ToString()+">"+nn.ToString();
-                        if (get_show_ells(((Celle)arrayList[i]).elementIds, uIDocument, ori_str, ori_g, points[0].X, points[0].Y, btm).Count == 0)
+                        f1.Text = item + ">" + n.ToString() + ">" + nn.ToString() + ">" + ((Celle)arrayList[i]).elementIds.Count.ToString();
+                        if (f1.flag>0)
+                        {
+                            f1.Dispose();
+                            return Result.Succeeded;
+                        }
+                        try
+                        {
+                            tmp_elementIds = get_show_ells(((Celle)arrayList[i]).elementIds, uIDocument, ori_str, ori_g, points[0].X, points[0].Y, btm);
+                        }
+                        catch (Exception)
+                        {
+
+                            foreach (ElementId id in ((Celle)arrayList[i]).elementIds)
+                            {
+                                f1.richTextBox3.Text = id + "\n" + f1.richTextBox3.Text;
+                                //return Result.Succeeded;
+                            }
+                        }
+                        if (tmp_elementIds.Count==0)
                         {
                             foreach (ElementId id in ((Celle)arrayList[i]).elementIds)
                             {
@@ -183,7 +201,10 @@ namespace Lightening
             using (Transaction trans = new Transaction(uIDocument.Document, "hide"))
             {
                 trans.Start();
-                uIDocument.ActiveView.HideElements(elementIds);
+                //try
+                //{
+                uIDocument.ActiveView.HideElementsTemporary(elementIds);
+                //uIDocument.ActiveView.HideElements(elementIds);
                 trans.Commit();
                 Application.DoEvents();
                 MemoryStream memoryStream = new MemoryStream();
@@ -200,6 +221,14 @@ namespace Lightening
                 {
                     return new List<ElementId>();
                 }
+                //}
+                //catch (Exception e)
+                //{
+
+                //    //MessageBox.Show(e.Message);
+                //    trans.RollBack();
+                //    return elementIds;
+                //}
             }
         }
     }
