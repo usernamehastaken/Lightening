@@ -44,7 +44,7 @@ namespace Lightening
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
 
-            //Class2.test(commandData.Application.ActiveUIDocument);
+            Class2.test(commandData.Application.ActiveUIDocument);
             //return Result.Succeeded;
 
             //ShowCursor(true);
@@ -203,10 +203,11 @@ namespace Lightening
                 trans.Start();
                 //try
                 //{
-                uIDocument.ActiveView.HideElementsTemporary(elementIds);
-                //uIDocument.ActiveView.HideElements(elementIds);
+                //uIDocument.ActiveView.HideElementsTemporary(elementIds);
+                uIDocument.ActiveView.HideElements(elementIds);
                 trans.Commit();
-                Application.DoEvents();
+                //Application.DoEvents();
+                uIDocument.RefreshActiveView();
                 MemoryStream memoryStream = new MemoryStream();
                 ori_g.CopyFromScreen(x, y, 0, 0, btm.Size);
                 btm.Save(memoryStream, ImageFormat.Jpeg);
@@ -214,11 +215,14 @@ namespace Lightening
                 if (ori_str != str)
                 {
                     UIFrameworkServices.QuickAccessToolBarService.performMultipleUndoRedoOperations(true, 1);
+                    //trans.RollBack();
                     Application.DoEvents();
+                    uIDocument.RefreshActiveView();
                     return elementIds;
                 }
                 else
                 {
+                    //trans.Commit();
                     return new List<ElementId>();
                 }
                 //}

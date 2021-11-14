@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.UI;
+using System.Windows.Forms;
 
 namespace Lightening
 {
@@ -13,13 +14,19 @@ namespace Lightening
     {
         public static void test(UIDocument uIDocument)
         {
-            //while (true)
-            //{
-            //    List<Reference> reffs = (List<Reference>)uIDocument.Selection.PickObjects(Autodesk.Revit.UI.Selection.ObjectType.Element);
-            //    //Element el = uIDocument.Document.GetElement(reff);
-            //    TaskDialog.Show("1", reffs.Count.ToString());
-            //}
-            Class1 class1 = new Class1();
+            FilteredElementCollector flt = new FilteredElementCollector(uIDocument.Document);
+            List<Element> elements = (List<Element>)flt.OfCategory(BuiltInCategory.OST_Materials).ToElements();
+            foreach (Element item in elements)
+            {
+                Transaction tran = new Transaction(uIDocument.Document, "0");
+                if (((Material)item).Transparency!=0)
+                {
+                    tran.Start();
+                    ((Material)item).Transparency = 0;
+                    tran.Commit();
+                }
+            }
+            uIDocument.RefreshActiveView();
         }
 
     }
